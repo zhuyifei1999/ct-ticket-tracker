@@ -34,7 +34,7 @@ class CtTicketTracker(commands.Bot):
             "UtilsCog",
             #"VerifyCog",
             "PlannerCog",
-            "WelcomeCog",
+            #"WelcomeCog",
             "TilesCog",
         ]
         for cog in cogs:
