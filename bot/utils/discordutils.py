@@ -73,11 +73,8 @@ def gatekeep():
     async def check(interaction: discord.Interaction) -> bool:
         has_access = False
         for role in interaction.user.roles:
-            if role.id in [1005472018189271160,
-                           1026966667345002517,
-                           1011968628419207238,
-                           860147253527838721,
-                           940942269933043712]:
+            if role.id in [1164311942274494495,
+                           1158679297326854204]:
                 has_access = True
                 break
         if not has_access:
