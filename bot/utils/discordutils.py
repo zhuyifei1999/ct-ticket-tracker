@@ -1,4 +1,5 @@
 import bot.exceptions
+from bot.classes import ErrorHandlerCog
 import discord
 import asyncio
 from discord.ext import commands
@@ -71,15 +72,13 @@ async def update_messages(
 
 def gatekeep():
     async def check(interaction: discord.Interaction) -> bool:
-        has_access = False
         for role in interaction.user.roles:
             if role.id in [1164311942274494495,
                            1158679297326854204]:
-                has_access = True
                 break
-        if not has_access:
+        else:
             raise bot.exceptions.Gatekept()
-        return has_access
+        return True
     return discord.app_commands.check(check)
 
 
@@ -91,3 +90,27 @@ def get_slash_command_id(bot: commands.Bot, command: str) -> int:
         if cmd.name == command:
             return cmd.id
     return -1
+
+
+manager_roles = [
+    1158679234525544468,
+]
+
+
+def require_manager(fn):
+    return discord.app_commands.checks.has_any_role(*manager_roles)(fn)
+
+
+def check_manager(wrapped):
+    async def _wrapper(self, interaction: discord.Interaction, *args):
+        for role in interaction.user.roles:
+            if role.id in manager_roles:
+                break
+        else:
+            return await ErrorHandlerCog.cog_app_command_error(
+                None, interaction,
+                discord.app_commands.errors.MissingAnyRole(manager_roles[:]),
+            )
+
+        await wrapped(self, interaction, *args)
+    return _wrapper

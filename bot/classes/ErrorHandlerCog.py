@@ -29,6 +29,9 @@ class ErrorHandlerCog(HelpMessageCog):
         elif error_type == discord.app_commands.errors.MissingPermissions:
             content = "You don't have the perms to execute this command. Sorry!\n" \
                       f"*Needs permissions: {', '.join(thrown_error.missing_permissions)}*"
+        elif error_type == discord.app_commands.errors.MissingAnyRole:
+            content = "You don't have the perms to execute this command. Sorry!\n" \
+                      f"You need to be a manager."
         elif error_type == MustBeForum:
             content = "The channel must be a forum!"
         elif error_type == Gatekept:
@@ -47,4 +50,3 @@ class ErrorHandlerCog(HelpMessageCog):
             await interaction.edit_original_response(content=content)
         else:
             await interaction.response.send_message(content, ephemeral=True)
-

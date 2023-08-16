@@ -440,7 +440,7 @@ class PlannerCog(ErrorHandlerCog):
     @planner_group.command(name="new", description="Create a new Planner channel.")
     @discord.app_commands.guild_only()
     @discord.app_commands.default_permissions(administrator=True)
-    @discord.app_commands.checks.has_permissions(manage_guild=True)
+    @bot.utils.discordutils.require_manager
     async def cmd_create_planner(self, interaction: discord.Interaction) -> None:
         channel = await interaction.guild.create_text_channel(name="planner")
         await self.add_planner(interaction, channel)
@@ -448,7 +448,7 @@ class PlannerCog(ErrorHandlerCog):
     @planner_group.command(name="remove", description="Removes Planner from an existing channel.")
     @discord.app_commands.guild_only()
     @discord.app_commands.default_permissions(administrator=True)
-    @discord.app_commands.checks.has_permissions(manage_guild=True)
+    @bot.utils.discordutils.require_manager
     async def cmd_remove_planner(self, interaction: discord.Interaction, channel: discord.TextChannel) -> None:
         if await bot.db.queries.planner.get_planner(channel.id) is None:
             await interaction.response.send_message(
@@ -469,7 +469,7 @@ class PlannerCog(ErrorHandlerCog):
         channel="The channel you want to add the Planner to.",
     )
     @discord.app_commands.default_permissions(administrator=True)
-    @discord.app_commands.checks.has_permissions(manage_guild=True)
+    @bot.utils.discordutils.require_manager
     async def cmd_add_planner(self, interaction: discord.Interaction, channel: discord.TextChannel) -> None:
         await self.add_planner(interaction, channel)
 
@@ -482,7 +482,7 @@ class PlannerCog(ErrorHandlerCog):
         tile_claim_channel="The channel where members log tile captures.",
     )
     @discord.app_commands.guild_only()
-    @discord.app_commands.checks.has_permissions(manage_guild=True)
+    @bot.utils.discordutils.require_manager
     async def cmd_configure_planner(self,
                                     interaction: discord.Interaction,
                                     planner_channel: discord.TextChannel,
@@ -543,7 +543,7 @@ class PlannerCog(ErrorHandlerCog):
         tiles="Comma separated value of tile codes.",
     )
     @discord.app_commands.default_permissions(administrator=True)
-    @discord.app_commands.checks.has_permissions(manage_guild=True)
+    @bot.utils.discordutils.require_manager
     async def cmd_overwrite_tiles(self, interaction: discord.Interaction, planner_channel: discord.TextChannel, tiles: str) -> None:
         tile_list = [t.upper() for t in tiles.split(",")]
         tile_re = r"(?:M|[A-G])(?:R|[A-G])(?:X|[A-H])"
@@ -907,7 +907,7 @@ class PlannerCog(ErrorHandlerCog):
         if should_refresh:
             await self.send_planner_msg(planner_id)
 
-    @discord.app_commands.checks.has_permissions(manage_guild=True)
+    @bot.utils.discordutils.require_manager
     async def edit_tile_time(self,
                              interaction: discord.Interaction,
                              planner_id: int,
