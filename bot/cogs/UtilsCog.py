@@ -209,7 +209,7 @@ class UtilsCog(ErrorHandlerCog):
                                   description="Get an idea of where a team's roster lives.")
     @discord.app_commands.describe(team_role="The role that every member of the team has.")
     @discord.app_commands.default_permissions(administrator=True)
-    @discord.app_commands.checks.has_permissions(manage_guild=True)
+    @bot.utils.discordutils.require_manager
     @discord.app_commands.guild_only()
     @bot.utils.discordutils.gatekeep()
     async def cmd_roster_timezones(self, interaction: discord.Interaction, team_role: discord.Role) -> None:

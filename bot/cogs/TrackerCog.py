@@ -5,6 +5,7 @@ from discord.ext import commands
 import re
 import bot.db.queries.tickets
 import bot.utils.bloons
+import bot.utils.discordutils
 from bot.classes import ErrorHandlerCog
 
 
@@ -38,7 +39,7 @@ class TrackerCog(ErrorHandlerCog):
     @discord.app_commands.describe(channel="The channel to start tracking.")
     @discord.app_commands.guild_only()
     @discord.app_commands.default_permissions(administrator=True)
-    @discord.app_commands.checks.has_permissions(manage_guild=True)
+    @bot.utils.discordutils.require_manager
     async def cmd_track(self, interaction: discord.Interaction, channel: discord.TextChannel) -> None:
         await bot.db.queries.tickets.track_channel(channel.id)
         await interaction.response.send_message(f"I am now tracking <#{channel.id}>", ephemeral=True)
@@ -47,7 +48,7 @@ class TrackerCog(ErrorHandlerCog):
     @discord.app_commands.describe(channel="The channel to stop tracking.")
     @discord.app_commands.guild_only()
     @discord.app_commands.default_permissions(administrator=True)
-    @discord.app_commands.checks.has_permissions(manage_guild=True)
+    @bot.utils.discordutils.require_manager
     async def cmd_untrack(self, interaction: discord.Interaction, channel: discord.TextChannel) -> None:
         await bot.db.queries.tickets.untrack_channel(channel.id)
         await interaction.response.send_message(f"I am no longer tracking <#{channel.id}>", ephemeral=True)
@@ -57,7 +58,7 @@ class TrackerCog(ErrorHandlerCog):
                                    season="The CT season to check. Defaults to the current one.")
     @discord.app_commands.guild_only()
     @discord.app_commands.default_permissions(administrator=True)
-    @discord.app_commands.checks.has_permissions(manage_guild=True)
+    @bot.utils.discordutils.require_manager
     async def cmd_tickets_list(self,
                                interaction: discord.Interaction,
                                channel: discord.TextChannel,
@@ -104,7 +105,7 @@ class TrackerCog(ErrorHandlerCog):
                                    season="The CT season to check. Defaults to the current one.")
     @discord.app_commands.guild_only()
     @discord.app_commands.default_permissions(administrator=True)
-    @discord.app_commands.checks.has_permissions(manage_guild=True)
+    @bot.utils.discordutils.require_manager
     async def cmd_member_tickets(self, interaction: discord.Interaction, channel: discord.TextChannel,
                                  member: discord.Member, season: None or int = 0,
                                  hide: None or bool = False) -> None:
@@ -141,7 +142,7 @@ class TrackerCog(ErrorHandlerCog):
                                    hide="If True, the message will be ephemeral.")
     @discord.app_commands.guild_only()
     @discord.app_commands.default_permissions(administrator=True)
-    @discord.app_commands.checks.has_permissions(manage_guild=True)
+    @bot.utils.discordutils.require_manager
     async def cmd_tile_history(self, interaction: discord.InteractionResponse,
                                channel: discord.TextChannel,
                                tile: str,

@@ -64,7 +64,7 @@ class LeaderboardCog(ErrorHandlerCog):
     @discord.app_commands.describe(channel="The channel to add it to.")
     @discord.app_commands.guild_only()
     @discord.app_commands.default_permissions(administrator=True)
-    @discord.app_commands.checks.has_permissions(manage_guild=True)
+    @bot.utils.discordutils.require_manager
     async def cmd_add_leaderboard(self, interaction: discord.Interaction, channel: discord.TextChannel) -> None:
         await bot.db.queries.leaderboard.add_leaderboard_channel(interaction.guild.id, channel.id)
         await interaction.response.send_message(
@@ -78,7 +78,7 @@ class LeaderboardCog(ErrorHandlerCog):
     @discord.app_commands.describe(channel="The channel to remove it from.")
     @discord.app_commands.guild_only()
     @discord.app_commands.default_permissions(administrator=True)
-    @discord.app_commands.checks.has_permissions(manage_guild=True)
+    @bot.utils.discordutils.require_manager
     async def cmd_remove_leaderboard(self, interaction: discord.Interaction, channel: discord.TextChannel) -> None:
         await bot.db.queries.leaderboard.remove_leaderboard_channel(interaction.guild.id, channel.id)
         await interaction.response.send_message(

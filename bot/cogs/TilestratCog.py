@@ -319,7 +319,7 @@ class TilestratCog(ErrorHandlerCog):
         return forum_channel
 
     @group_tilestratchannel.command(name="create", description="Create a Tile Strats forum.")
-    @discord.app_commands.checks.has_permissions(manage_guild=True)
+    @bot.utils.discordutils.require_manager
     @discord.app_commands.guild_only()
     async def cmd_create_raidlog(self, interaction: discord.Interaction) -> None:
         if "COMMUNITY" not in interaction.guild.features:
@@ -332,13 +332,13 @@ class TilestratCog(ErrorHandlerCog):
         description="Set an existing forum as the server's Tile Strats forum"
     )
     @discord.app_commands.describe(forum="The forum to set as the server's Tile Strats forum")
-    @discord.app_commands.checks.has_permissions(manage_guild=True)
+    @bot.utils.discordutils.require_manager
     @discord.app_commands.guild_only()
     async def cmd_set_raidlog(self, interaction: discord.Interaction, forum: discord.ForumChannel) -> None:
         await self.set_raidlog(interaction, forum)
 
     @group_tilestratchannel.command(name="unset", description="Stop tracking the current Tile Strats forum")
-    @discord.app_commands.checks.has_permissions(manage_guild=True)
+    @bot.utils.discordutils.require_manager
     @discord.app_commands.guild_only()
     async def cmd_unset_raidlog(self, interaction: discord.Interaction) -> None:
         await bot.db.queries.tilestrat.del_tile_strat_forum(interaction.guild_id)

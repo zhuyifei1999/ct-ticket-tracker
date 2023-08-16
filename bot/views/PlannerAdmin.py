@@ -1,5 +1,6 @@
 import discord
 import bot.db.queries.planner
+import bot.utils.discordutils
 from datetime import datetime, timedelta
 from typing import Callable, Any, Awaitable
 
@@ -11,16 +12,7 @@ AddTileCallback = Callable[[discord.Interaction, int, str, int], Awaitable[None]
 TileSelectCallback = Callable[[discord.Interaction, int, str], Awaitable[None]]
 
 
-def check_manage_guild(wrapped: Callable):
-    async def _wrapper(self, interaction: discord.Interaction, *args):
-        if not interaction.user.guild_permissions.manage_guild:
-            await interaction.response.send_message(
-                content="You need *Manage Guild* permissions to use this!",
-                ephemeral=True,
-            )
-            return
-        await wrapped(self, interaction, *args)
-    return _wrapper
+check_manager = bot.utils.discordutils.check_manager
 
 
 class SwitchPlannerButton(discord.ui.Button):
@@ -33,7 +25,7 @@ class SwitchPlannerButton(discord.ui.Button):
             style=discord.ButtonStyle.red if self.is_active else discord.ButtonStyle.green
         )
 
-    @check_manage_guild
+    @check_manager
     async def callback(self, interaction: discord.Interaction) -> Any:
         await self.switch_callback(interaction, not self.is_active)
 
@@ -47,7 +39,7 @@ class ClearPlannerButton(discord.ui.Button):
             style=discord.ButtonStyle.gray
         )
 
-    @check_manage_guild
+    @check_manager
     async def callback(self, interaction: discord.Interaction) -> Any:
         await self.clear_callback(interaction)
 
@@ -75,7 +67,7 @@ class ForceUnclaimButton(discord.ui.Button):
             style=discord.ButtonStyle.gray
         )
 
-    @check_manage_guild
+    @check_manager
     async def callback(self, interaction: discord.Interaction) -> Any:
         await interaction.response.send_modal(
             ForceUnclaimModal(self.planner_id, self.unclaim_callback)
@@ -133,7 +125,7 @@ class EditTimeButton(discord.ui.Button):
             style=discord.ButtonStyle.gray
         )
 
-    @check_manage_guild
+    @check_manager
     async def callback(self, interaction: discord.Interaction) -> Any:
         await interaction.response.send_modal(TimeEditModal(self.planner_id, self.edit_time_callback))
 
@@ -187,7 +179,7 @@ class AddRemoveTileButton(discord.ui.Button):
             style=discord.ButtonStyle.gray
         )
 
-    @check_manage_guild
+    @check_manager
     async def callback(self, interaction: discord.Interaction) -> Any:
         await interaction.response.send_modal(
             AddRemoveTileModal(self.planner_id, self.add_callback, self.remove_callback)
