@@ -199,7 +199,7 @@ class TrackerCog(ErrorHandlerCog):
                 payload.channel_id not in (await bot.db.queries.tickets.tracked_channels()):
             return
 
-        tile_re = r"(?:[a-gA-G][a-gA-G][a-hA-H]|[Mm][Rr][Xx]|[Zz]{3})"
+        tile_re = r"\b(?:[a-gA-G][a-gA-G][a-hA-H]|[Mm][Rr][Xx]|[Zz]{3})\b"
         channel = self.bot.get_channel(payload.channel_id)
         message = await channel.fetch_message(payload.message_id)
         match = re.search(tile_re, message.content)
