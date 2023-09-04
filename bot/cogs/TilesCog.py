@@ -40,7 +40,7 @@ class TilesCog(ErrorHandlerCog):
     @discord.app_commands.describe(tile="The 3 letter tile code, or a relic name.",
                                    hide="Hide the output.")
     @discord.app_commands.guild_only()
-    async def cmd_tile(self, interaction: discord.Interaction, tile: str, hide: None or bool = True) -> None:
+    async def cmd_tile(self, interaction: discord.Interaction, tile: str, hide: None or bool = False) -> None:
         tile = tile.upper()
         challenge_data = await asyncio.to_thread(self.fetch_challenge_data, tile)
         if challenge_data is None:
