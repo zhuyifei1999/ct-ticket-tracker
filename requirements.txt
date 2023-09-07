@@ -1,4 +1,4 @@
 discord.py
 asyncpg
 aiohttp
-bloonspy
+bloonspy >= 0.6.1
