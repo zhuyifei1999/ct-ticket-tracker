@@ -38,14 +38,15 @@ class TilesCog(ErrorHandlerCog):
     @discord.app_commands.command(name="tile",
                                   description="Check a tile's challenge data")
     @discord.app_commands.describe(tile="The 3 letter tile code, or a relic name.",
+                                   season="The CT season to check. Defaults to the current one.",
                                    hide="Hide the output.")
     @discord.app_commands.guild_only()
-    async def cmd_tile(self, interaction: discord.Interaction, tile: str, hide: None or bool = False) -> None:
+    async def cmd_tile(self, interaction: discord.Interaction, tile: str, season: None or int = None, hide: None or bool = False) -> None:
         tile = tile.upper()
-        challenge_data = await asyncio.to_thread(self.fetch_challenge_data, tile)
+        challenge_data = await asyncio.to_thread(self.fetch_challenge_data, tile, season)
         if challenge_data is None:
-            tile = await asyncio.to_thread(bot.utils.bloons.relic_to_tile_code, tile)
-            challenge_data = await asyncio.to_thread(self.fetch_challenge_data, tile)
+            tile = await asyncio.to_thread(bot.utils.bloons.relic_to_tile_code, tile, season)
+            challenge_data = await asyncio.to_thread(self.fetch_challenge_data, tile, season)
         if challenge_data is None:
             await interaction.response.send_message(
                 content="I don't have the challenge data for that tile!",
@@ -96,8 +97,11 @@ class TilesCog(ErrorHandlerCog):
         view.set_original_interaction(interaction)
 
     @staticmethod
-    def fetch_challenge_data(tile: str):
-        path = f"bot/files/json/tiles/{tile}.json"
+    def fetch_challenge_data(tile: str, season: None or int = None):
+        if season is None:
+            path = f"/ctmap/current/tiles/{tile}.json"
+        else:
+            path = f"/ctmap/{season}/tiles/{tile}.json"
         if not os.path.exists(path):
             return None
         fin = open(path)

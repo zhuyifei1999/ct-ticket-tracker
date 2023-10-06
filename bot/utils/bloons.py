@@ -277,8 +277,11 @@ def add_spaces(text: str) -> str:
     return re.sub("[A-Z]", repl, text).strip()
 
 
-def fetch_tile_data(tile: str):
-    path = f"bot/files/json/tiles/{tile}.json"
+def fetch_tile_data(tile: str, season: None or int = None):
+    if season is None:
+        path = f"/ctmap/current/tiles/{tile}.json"
+    else:
+        path = f"/ctmap/{season}/tiles/{tile}.json"
     if not os.path.exists(path):
         return None
     fin = open(path)
@@ -287,17 +290,20 @@ def fetch_tile_data(tile: str):
     return data
 
 
-def fetch_all_tiles():
-    path = f"bot/files/json/tiles"
+def fetch_all_tiles(season: None or int = None):
+    if season is None:
+        path = f"/ctmap/current/tiles"
+    else:
+        path = f"/ctmap/{season}/tiles"
     tiles = []
     for file in os.listdir(path):
-        data = fetch_tile_data(file[:3])
+        data = fetch_tile_data(file[:3], season)
         if data is not None:
             tiles.append(data)
     return tiles
 
 
-def relic_to_tile_code(relic: str) -> str or None:
+def relic_to_tile_code(relic: str, season: None or int = None) -> str or None:
     relic = relic.lower().replace(" ", "_")
     relics = {
         'AirAndSea': ['aas', 'airandsea', 'air_and_sea', "ans"],
@@ -338,7 +344,7 @@ def relic_to_tile_code(relic: str) -> str or None:
     }
     for key in relics:
         if relic in relics[key]:
-            tiles = fetch_all_tiles()
+            tiles = fetch_all_tiles(season)
             for tile in tiles:
                 if tile["RelicType"] == key:
                     return tile["Code"]
