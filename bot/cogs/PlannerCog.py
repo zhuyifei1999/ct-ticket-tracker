@@ -63,7 +63,7 @@ class PlannerCog(ErrorHandlerCog):
         next_check = next_check.replace(minute=int(next_check.minute/PlannerCog.CHECK_EVERY)*PlannerCog.CHECK_EVERY) \
                      + timedelta(minutes=PlannerCog.CHECK_EVERY)
         # This is updated in inject_new_banners which gets called every reset
-        self.current_event: btd6.ContestedTerritoryEvent = bot.utils.bloons.get_current_ct_event()
+        self.current_event = bot.utils.bloons.get_current_ct_number()
         self.next_check = next_check
         self.next_check_unclaimed = next_check
         self.banner_decays = []
@@ -328,7 +328,8 @@ class PlannerCog(ErrorHandlerCog):
     @tasks.loop(seconds=30)
     async def check_planner_refresh(self) -> None:
         now = datetime.now()
-        if now > self.current_event.end + timedelta(hours=1) or now < self.current_event.start:
+        ct_start, ct_end = bot.utils.bloons.get_current_ct_period()
+        if now > ct_end + timedelta(hours=1) or now < ct_start:
             return
 
         for planner_channel in self.next_planner_refreshes:
@@ -360,14 +361,13 @@ class PlannerCog(ErrorHandlerCog):
         """
         If there's a new CT event live, inject the new event's banners into all planners.
         """
-        current_event = await asyncio.to_thread(bot.utils.bloons.get_current_ct_event)
+        current_event = bot.utils.bloons.get_current_ct_number()
         if current_event == self.current_event:
             return
-        self.current_event = current_event
 
         banners = [
-            tile.id for tile in (await asyncio.to_thread(current_event.tiles))
-            if tile.tile_type == btd6.CtTileType.BANNER
+            tile['Code'] for tile in (await asyncio.to_thread(bot.utils.bloons.fetch_all_tiles, current_event))
+            if tile['TileType'] == 'Banner'
         ]
         planners = await bot.db.queries.planner.get_planners()
         for p in planners:
@@ -380,6 +380,8 @@ class PlannerCog(ErrorHandlerCog):
                 bot.db.queries.planner.add_tile_to_planner(p.planner_channel, t, 24)
                 for t in banners
             ])
+
+        self.current_event = current_event
 
     async def reassign_has_tickets_roles(self) -> None:
         """
@@ -639,7 +641,7 @@ class PlannerCog(ErrorHandlerCog):
         tile_table = PLANNER_TABLE_HEADER
         banner_codes = await self.get_banner_tile_list()
         relic_tiles = await self.get_relic_tile_list()
-        relic_codes = [r.id for r in relic_tiles]
+        relic_codes = [r['Code'] for r in relic_tiles]
         tile_list = await bot.db.queries.planner.get_planner_tracked_tiles(channel)
         ct_start, ct_end = bot.utils.bloons.get_current_ct_period()
         if now < ct_end:
@@ -678,8 +680,9 @@ class PlannerCog(ErrorHandlerCog):
                 r_idx = relic_codes.index(tile.tile)
                 emoji_tile = TILE_RELIC
                 relic = relic_tiles[r_idx]
-                if relic.relic in RELICS.keys():
-                    emoji_tile = RELICS[relic.relic]
+                relic = btd6.Relic.from_string(relic['RelicType'])
+                if relic in RELICS.keys():
+                    emoji_tile = RELICS[relic]
             row_second_part = PLANNER_TABLE_ROW_STALE if emoji_claim == EXPIRE_STALE else PLANNER_TABLE_ROW_TIME
             new_row = PLANNER_TABLE_ROW.format(
                 emoji_claim=emoji_claim,
@@ -755,17 +758,19 @@ class PlannerCog(ErrorHandlerCog):
     @staticmethod
     async def get_banner_tile_list() -> list[str]:
         """Returns a list of banner tile codes."""
+        tiles = await asyncio.to_thread(bot.utils.bloons.fetch_all_tiles)
         return [
-            tile.id for tile in bot.utils.bloons.get_current_ct_tiles()
-            if tile.tile_type == btd6.CtTileType.BANNER
+            tile['Code'] for tile in tiles
+            if tile['TileType'] == 'Banner'
         ]
 
     @staticmethod
     async def get_relic_tile_list() -> list[btd6.CtTile]:
         """Returns a list of relic tiles."""
+        tiles = await asyncio.to_thread(bot.utils.bloons.fetch_all_tiles)
         return [
-            r for r in bot.utils.bloons.get_current_ct_tiles()
-            if r.tile_type == btd6.CtTileType.RELIC
+            tile for tile in tiles
+            if tile['TileType'] == 'Relic'
         ]
 
     async def send_planner_msg(self, channel_id: int) -> None:

@@ -63,10 +63,10 @@ class TilesCog(ErrorHandlerCog):
     @discord.app_commands.command(name="raceregs",
                                   description="Get a list of all race regs.")
     async def cmd_raceregs(self, interaction: discord.Interaction) -> None:
-        tiles = bot.utils.bloons.get_current_ct_tiles()
+        tiles = await asyncio.to_thread(bot.utils.bloons.fetch_all_tiles)
         race_regs = [
-            tile.id for tile in tiles
-            if tile.tile_type == btd6.CtTileType.REGULAR and tile.game_type == btd6.GameType.RACE
+            tile['Code'] for tile in tiles
+            if tile['TileType'] == 'Regular' and tile['GameData']['subGameType'] == 2
         ]
 
         await interaction.response.send_message(
