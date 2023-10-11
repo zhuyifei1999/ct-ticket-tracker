@@ -13,6 +13,7 @@ from bot.utils.emojis import TILE_BANNER, TILE_REGULAR, TILE_RELIC, RELICS
 from bot.views import PlannerUserView, PlannerAdminView
 from bot.utils.emojis import EXPIRE_LATER, EXPIRE_DONT_RECAP, EXPIRE_AFTER_RESET, EXPIRE_STALE, EXPIRE_2HR, \
     EXPIRE_3HR, BLANK
+from bot.utils.emojis import LEAST_TIERS, LEAST_CASH, TIME_ATTACK, BLOONARIUS, LYCH, VORTEX, DREADBLOON, PHAYZE
 from bloonspy import btd6
 
 
@@ -32,7 +33,7 @@ PLANNER_TABLE_HEADER = """
 ——————- + -——————————————
 """[1:]
 PLANNER_TABLE_EMPTY = "https://cdn.discordapp.com/attachments/924255725390270474/1122521704829292555/IMG_0401.png"
-PLANNER_TABLE_ROW = "{emoji_claim} {emoji_tile} `{tile}`  |  "
+PLANNER_TABLE_ROW = "{emoji_claim} {emoji_tile} {emoji_gametype} `{tile}`  |  "
 PLANNER_TABLE_ROW_TIME = "<t:{expire_at}:T> (<t:{expire_at}:R>){claimer}\n"
 PLANNER_TABLE_ROW_STALE = "⚠️ **__STALE SINCE <t:{expire_at}:R>__** ⚠️\n"
 
@@ -639,9 +640,6 @@ class PlannerCog(ErrorHandlerCog):
 
         now = datetime.now()
         tile_table = PLANNER_TABLE_HEADER
-        banner_codes = await self.get_banner_tile_list()
-        relic_tiles = await self.get_relic_tile_list()
-        relic_codes = [r['Code'] for r in relic_tiles]
         tile_list = await bot.db.queries.planner.get_planner_tracked_tiles(channel)
         ct_start, ct_end = bot.utils.bloons.get_current_ct_period()
         if now < ct_end:
@@ -656,8 +654,13 @@ class PlannerCog(ErrorHandlerCog):
             EXPIRE_AFTER_RESET: None,
         }
         banner_claims = []
-        for i in range(len(tracked_tiles)):
-            tile = tracked_tiles[i]
+
+        tiles_data = []
+        for tile in tracked_tiles:
+            tiles_data.append(asyncio.to_thread(bot.utils.bloons.fetch_tile_data, tile.tile))
+        tiles_data = await asyncio.gather(*tiles_data)
+
+        for tile, tile_data in zip(tracked_tiles, tiles_data):
             expire_at = tile.claimed_at + timedelta(hours=tile.expires_in_hr)
             emoji_claim = EXPIRE_LATER
             if expire_at >= ct_end-timedelta(hours=12):
@@ -674,19 +677,38 @@ class PlannerCog(ErrorHandlerCog):
                 emoji_claim = EXPIRE_3HR
 
             emoji_tile = TILE_REGULAR
-            if tile.tile in banner_codes:
+            if tile_data['TileType'] == 'Banner':
                 emoji_tile = TILE_BANNER
-            elif tile.tile in relic_codes:
-                r_idx = relic_codes.index(tile.tile)
+            elif tile_data['TileType'] == 'Relic':
                 emoji_tile = TILE_RELIC
-                relic = relic_tiles[r_idx]
-                relic = btd6.Relic.from_string(relic['RelicType'])
+                relic = btd6.Relic.from_string(tile_data['RelicType'])
                 if relic in RELICS.keys():
                     emoji_tile = RELICS[relic]
+
+            emoji_gametype = BLANK
+            if tile_data['GameData']['subGameType'] == 9:
+                emoji_gametype = LEAST_TIERS
+            elif tile_data['GameData']['subGameType'] == 8:
+                emoji_gametype = LEAST_CASH
+            elif tile_data['GameData']['subGameType'] == 2:
+                emoji_gametype = TIME_ATTACK
+            elif tile_data['GameData']['subGameType'] == 4:
+                if tile_data['GameData']['bossData']['bossBloon'] == 0:
+                    emoji_gametype = BLOONARIUS
+                elif tile_data['GameData']['bossData']['bossBloon'] == 1:
+                    emoji_gametype = LYCH
+                elif tile_data['GameData']['bossData']['bossBloon'] == 2:
+                    emoji_gametype = VORTEX
+                elif tile_data['GameData']['bossData']['bossBloon'] == 3:
+                    emoji_gametype = DREADBLOON
+                elif tile_data['GameData']['bossData']['bossBloon'] == 4:
+                    emoji_gametype = PHAYZE
+
             row_second_part = PLANNER_TABLE_ROW_STALE if emoji_claim == EXPIRE_STALE else PLANNER_TABLE_ROW_TIME
             new_row = PLANNER_TABLE_ROW.format(
                 emoji_claim=emoji_claim,
                 emoji_tile=emoji_tile,
+                emoji_gametype=emoji_gametype,
                 tile=tile.tile,
             ) + row_second_part.format(
                 expire_at=int(expire_at.timestamp()),
@@ -754,24 +776,6 @@ class PlannerCog(ErrorHandlerCog):
             )
 
         return views
-
-    @staticmethod
-    async def get_banner_tile_list() -> list[str]:
-        """Returns a list of banner tile codes."""
-        tiles = await asyncio.to_thread(bot.utils.bloons.fetch_all_tiles)
-        return [
-            tile['Code'] for tile in tiles
-            if tile['TileType'] == 'Banner'
-        ]
-
-    @staticmethod
-    async def get_relic_tile_list() -> list[btd6.CtTile]:
-        """Returns a list of relic tiles."""
-        tiles = await asyncio.to_thread(bot.utils.bloons.fetch_all_tiles)
-        return [
-            tile for tile in tiles
-            if tile['TileType'] == 'Relic'
-        ]
 
     async def send_planner_msg(self, channel_id: int) -> None:
         """(Re)sends the planner message.
