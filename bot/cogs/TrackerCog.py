@@ -70,7 +70,7 @@ class TrackerCog(ErrorHandlerCog):
 
         await interaction.response.defer(ephemeral=hide)
 
-        message = "`Member    ` | `D1` | `D2` | `D3` | `D4` | `D5` | `D6` | `D7` |\n"
+        message = "**`Member    `** | **`D1`** | **`D2`** | **`D3`** | **`D4`** | **`D5`** | **`D6`** | **`D7`** |\n"
         # separator = "------------- + --- + --  + --  + --  + --- + --  + ---\n"
         row = "`{:10.10}` | `{:<2}` | `{:<2}` | `{:<2}` | `{:<2}` | `{:<2}` | `{:<2}` | `{:<2}` |\n"
 
