@@ -8,6 +8,7 @@ import bot.utils.io
 from bot.classes import ErrorHandlerCog
 from bot.utils.emojis import TOP_1_GLOBAL, TOP_2_GLOBAL, TOP_3_GLOBAL, TOP_25_GLOBAL, ECO, ECO_NEGATIVE, NEW_TEAM, \
     TOP_1_PERCENT
+from bot.utils.emojis import BLANK
 
 
 class LeaderboardCog(ErrorHandlerCog):
@@ -100,7 +101,7 @@ class LeaderboardCog(ErrorHandlerCog):
                      ("Team                                                 |    Points         (Gained)\n"
                       "———————————————— + ————————————")
         placements_emojis = [TOP_1_GLOBAL, TOP_2_GLOBAL, TOP_3_GLOBAL] + [TOP_25_GLOBAL]*(25-3)
-        row_template = "{} `{: <20}`    | `{: <7,}`"
+        row_template = "{} {} `{: <20}`    | `{: <7,}`"
         eco_template = " ({} `{: <4}`)"
 
         current_event = await asyncio.to_thread(bot.utils.bloons.get_current_ct_event)
@@ -128,7 +129,12 @@ class LeaderboardCog(ErrorHandlerCog):
                 placement = "❌"
 
             team_name = team.name.split("-")[0]
-            message_current += "\n" + row_template.format(placement, team_name, team.score)
+            if team.id in ['9fba16d88ac0f9a34b108b430972b022c90419bccd428a6c',
+                           '9fba14828cc3f9f418478e1d5d71e475cb074fbc96148b69']:
+                team_icon = '<:divine:1164468199362941008>'
+            else:
+                team_icon = BLANK
+            message_current += "\n" + row_template.format(placement, team_icon, team_name, team.score)
             if not should_skip_eco:
                 if team.id in self.last_hour_score:
                     score_gained = team.score - self.last_hour_score[team.id]
@@ -138,7 +144,7 @@ class LeaderboardCog(ErrorHandlerCog):
                     message_current += f" {NEW_TEAM}"
             current_hour_score[team.id] = team.score
 
-            if (i+1) % 20 == 0 or i == len(leaderboard)-1:
+            if (i+1) % 15 == 0 or i == len(leaderboard)-1:
                 messages.append(message_current)
                 message_current = ""
 
