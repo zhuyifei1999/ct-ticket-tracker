@@ -35,7 +35,7 @@ PLANNER_TABLE_HEADER = """
 PLANNER_TABLE_EMPTY = "https://cdn.discordapp.com/attachments/924255725390270474/1122521704829292555/IMG_0401.png"
 PLANNER_TABLE_ROW = "{emoji_claim} {emoji_tile} {emoji_gametype} `{tile}`  |  "
 PLANNER_TABLE_ROW_TIME = "<t:{expire_at}:T> (<t:{expire_at}:R>){claimer}\n"
-PLANNER_TABLE_ROW_STALE = "⚠️ **__STALE SINCE <t:{expire_at}:R>__** ⚠️\n"
+PLANNER_TABLE_ROW_STALE = "⚠️ **__STALE SINCE <t:{expire_at}:R>__** ⚠️{claimer}\n"
 
 
 class PlannerCog(ErrorHandlerCog):
