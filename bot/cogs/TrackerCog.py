@@ -238,6 +238,22 @@ class TrackerCog(ErrorHandlerCog):
             if hasattr(cog, "on_tile_uncaptured"):
                 await cog.on_tile_uncaptured(capture.tile, capture.channel_id, capture.user_id)
 
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message) -> None:
+        tile_re = r"^\s*(?:[a-gA-G][a-gA-G][a-hA-H]|[Mm][Rr][Xx]|[Zz]{3})\s*$"
+        match = re.match(tile_re, message.content)
+        if match is None:
+            return
+
+        tile = match.group(0).upper()
+        if not bot.utils.bloons.is_tile_code_valid(tile):
+            return
+
+        for cog_name in self.bot.cogs:
+            cog = self.bot.cogs[cog_name]
+            if hasattr(cog, "on_tile_claimed"):
+                await cog.on_tile_claimed(tile, message.channel.id, message.author.id)
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(TrackerCog(bot))

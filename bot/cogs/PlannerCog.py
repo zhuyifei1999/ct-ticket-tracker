@@ -798,7 +798,7 @@ class PlannerCog(ErrorHandlerCog):
             pass
 
     @staticmethod
-    async def switch_tile_claim(user: discord.Member, planner_channel_id: int, tile: str) -> tuple[str, bool]:
+    async def switch_tile_claim(user: discord.Member, planner_channel_id: int, tile: str, force_claim: bool = False) -> tuple[str, bool]:
         """Claims or unclaims a tile for an user.
 
         :param user: The member who wants to claim the tile.
@@ -821,9 +821,12 @@ class PlannerCog(ErrorHandlerCog):
         response = "That tile's not claimed by you! Hands off! 💢"
         refresh = False
         if tile_status.claimed_by == user.id:
-            await bot.db.queries.planner.planner_unclaim_tile(tile, planner_channel_id)
-            response = f"You have unclaimed `{tile}`!"
-            refresh = True
+            if force_claim:
+                response = f"You have already claimed `{tile}`!"
+            else:
+                await bot.db.queries.planner.planner_unclaim_tile(tile, planner_channel_id)
+                response = f"You have unclaimed `{tile}`!"
+                refresh = True
         elif len(claimed_by_user) >= 4:
             response = "You already have 4 tiles claimed. You can't claim any more."
         elif tile_status.claimed_by is None:
@@ -882,6 +885,26 @@ class PlannerCog(ErrorHandlerCog):
         tile_list = await bot.db.queries.planner.get_planner_tracked_tiles(planner_id)
         if tile in tile_list:
             self.banner_decays = await bot.db.queries.planner.get_tile_closest_to_expire(datetime.now())
+            await self.send_planner_msg(planner_id)
+
+    async def on_tile_claimed(self, tile: str, claim_channel: int, claimer: int) -> None:
+        """
+        Event fired when a tile gets claimed.
+
+        :param tile: The ID of the tile.
+        :param claim_channel: The ID of the Ticket Tracker channel.
+        :param claimer: The ID of the user who claimed it.
+        """
+
+        planner_id = await bot.db.queries.planner.get_planner_linked_to(claim_channel)
+        if planner_id is None:
+            return
+
+        channel = self.bot.get_channel(claim_channel)
+        member = channel.guild.get_member(claimer)
+
+        _, should_refresh = await self.switch_tile_claim(member, planner_id, tile, force_claim=True)
+        if should_refresh:
             await self.send_planner_msg(planner_id)
 
     @discord.app_commands.checks.has_permissions(manage_guild=True)
